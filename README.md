@@ -22,10 +22,10 @@ Note that implementing the assignment as specified will only provide 90 out of 1
 
 ### Grading
 
-[5] Ability to add control points
-[5] Ability to select left/right colors of control points
-[5] Ability to insert multiple curves
-[5] Ability to edit positions and colors of control points
-[20] Correct rendering of curves as thick quads with correct left/right colors
-[50] Correct rendering of diffusion curve image
-[10] Extensions to basic requirements
+- [5] Ability to add control points
+- [5] Ability to select left/right colors of control points
+- [5] Ability to insert multiple curves
+- [5] Ability to edit positions and colors of control points
+- [20] Correct rendering of curves as thick quads with correct left/right colors
+- [50] Correct rendering of diffusion curve image
+- [10] Extensions to basic requirements

@@ -50,13 +50,16 @@ class Curve
     {
     }
 
-    void draw()
+    void drawControlPoints()
     {
       glColor3f(1.0f, 0.0f, 0.0f);
       for (size_t i = 0; i < _controlPoints.size(); i++) {
         _controlPoints[i].draw();
       }
+    }
 
+    void drawCurve()
+    {
       glBegin(GL_QUADS);
         for (size_t i = 0; i < _interpolants.size() - 1; i++) {
           // Get the normal

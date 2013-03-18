@@ -20,6 +20,11 @@ void Canvas::addCurve(Curve<8> *curve)
   _curves.push_back(curve);
 }
 
+void Canvas::togglePointVisibility()
+{
+  _arePointsVisible = !_arePointsVisible;
+}
+
 void Canvas::update(float dt)
 {
   for (size_t i = 0; i < _curves.size(); i++) {
@@ -30,7 +35,10 @@ void Canvas::update(float dt)
 void Canvas::draw()
 {
   for (size_t i = 0; i < _curves.size(); i++) {
-    _curves[i]->draw();
+    if (_arePointsVisible) {
+      _curves[i]->drawControlPoints();
+    }
+    _curves[i]->drawCurve();
   }
 }
 

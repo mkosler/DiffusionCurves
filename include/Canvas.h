@@ -10,12 +10,14 @@ class Canvas
 {
   private:
     std::vector<Curve<8>*> _curves;
+    bool _arePointsVisible;
 
   public:
     Canvas();
     ~Canvas();
 
     void addCurve(Curve<8> *curve);
+    void togglePointVisibility();
 
     void update(float dt);
     void draw();

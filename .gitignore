@@ -1,2 +1,4 @@
 *~
 *.sw?
+DiffusionCurves
+src/*.o

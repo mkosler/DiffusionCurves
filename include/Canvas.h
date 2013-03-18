@@ -21,6 +21,9 @@ class Canvas
     void draw();
 
     friend std::ostream &operator<<(std::ostream &os, const Canvas &c);
+
+    static void load(std::string filename, Canvas &canvas);
+    static void save(std::string filename, Canvas &canvas);
 };
 
 #endif

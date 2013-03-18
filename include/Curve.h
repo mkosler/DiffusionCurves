@@ -11,6 +11,9 @@
 template<int n>
 class Curve
 {
+  private:
+    friend class Canvas;
+
   protected:
     bool _hasBeenUpdated;
     unsigned _degree;

@@ -29,6 +29,9 @@ void App::handleKeyPressed(sf::Event::KeyEvent &event)
     case sf::Key::Space:
       std::cout << _canvas << std::endl;
       break;
+    case sf::Key::C:
+      _canvas.clear();
+      break;
     case sf::Key::L:
       Canvas::load("assets/test.dat", _canvas);
       break;

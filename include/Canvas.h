@@ -18,6 +18,7 @@ class Canvas
 
     void addCurve(Curve<8> *curve);
     void togglePointVisibility();
+    void clear();
 
     void update(float dt);
     void draw();

@@ -32,6 +32,10 @@ void App::handleKeyPressed(sf::Event::KeyEvent &event)
     case sf::Key::V:
       _canvas.togglePointVisibility();
       break;
+    case sf::Key::S:
+      std::cout << "Saving canvas..." << std::endl;
+      Canvas::save("assets/test.dat", _canvas);
+      break;
     default:
       break;
   }

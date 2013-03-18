@@ -3,15 +3,13 @@
 #include "Canvas.h"
 
 Canvas::Canvas()
+  : _arePointsVisible(true)
 {
 }
 
 Canvas::~Canvas()
 {
-  while (!_curves.empty()) {
-    delete _curves.back();
-    _curves.pop_back();
-  }
+  clear();
 }
 
 void Canvas::addCurve(Curve<8> *curve)
@@ -23,6 +21,15 @@ void Canvas::addCurve(Curve<8> *curve)
 void Canvas::togglePointVisibility()
 {
   _arePointsVisible = !_arePointsVisible;
+}
+
+void Canvas::clear()
+{
+  _arePointsVisible = true;
+  while (!_curves.empty()) {
+    delete _curves.back();
+    _curves.pop_back();
+  }
 }
 
 void Canvas::update(float dt)
@@ -57,7 +64,10 @@ void Canvas::load(std::string filename, Canvas &canvas)
 
 void Canvas::save(std::string filename, Canvas &canvas)
 {
-  std::ofstream ofs;
+  std::ofstream ofs(filename.c_str());
+  if (!ofs.is_open()) {
+    std::cerr << "Error opening file: " << filename << std::endl;
+  }
 
   ofs << canvas._curves.size() << std::endl << std::endl;
   for (size_t i = 0; i < canvas._curves.size(); i++) {
@@ -71,4 +81,6 @@ void Canvas::save(std::string filename, Canvas &canvas)
       ofs << point[5] << ' ' << point[6] << ' ' << point[7] << std::endl << std::endl;
     }
   }
+
+  ofs.close();
 }

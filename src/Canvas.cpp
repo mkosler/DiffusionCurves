@@ -1,5 +1,6 @@
 #include <fstream>
 
+#include "Bezier.h"
 #include "Canvas.h"
 
 Canvas::Canvas()
@@ -60,6 +61,28 @@ std::ostream &operator<<(std::ostream &os, const Canvas &c)
 
 void Canvas::load(std::string filename, Canvas &canvas)
 {
+  canvas.clear();
+
+  std::ifstream ifs(filename.c_str());
+  if (!ifs.is_open()) {
+    std::cerr << "Error opening file: " << filename << std::endl;
+  }
+
+  size_t curvesCount, pointsCount;
+  std::vector<Point<8> > controlPoints;
+  float p[8];
+  ifs >> curvesCount;
+  for (size_t i = 0; i < curvesCount; i++) {
+    ifs >> pointsCount;
+    for (size_t j = 0; j < pointsCount; j++) {
+      ifs >> p[0] >> p[1];
+      ifs >> p[2] >> p[3] >> p[4];
+      ifs >> p[5] >> p[6] >> p[7];
+
+      controlPoints.push_back(Point<8>(p));
+    }
+    canvas.addCurve(new Bezier<8>(controlPoints, controlPoints.size() - 1));
+  }
 }
 
 void Canvas::save(std::string filename, Canvas &canvas)
@@ -73,8 +96,8 @@ void Canvas::save(std::string filename, Canvas &canvas)
   for (size_t i = 0; i < canvas._curves.size(); i++) {
     Curve<8> *curve = canvas._curves[i];
     ofs << curve->_controlPoints.size() << std::endl;
-    for (size_t i = 0; i < curve->_controlPoints.size(); i++) {
-      Point<8> point = curve->_controlPoints[i];
+    for (size_t j = 0; i < curve->_controlPoints.size(); i++) {
+      Point<8> point = curve->_controlPoints[j];
 
       ofs << point[0] << ' ' << point[1] << std::endl;
       ofs << point[2] << ' ' << point[3] << ' ' << point[4] << std::endl;

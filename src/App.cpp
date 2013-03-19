@@ -32,6 +32,9 @@ void App::handleKeyPressed(sf::Event::KeyEvent &event)
     case sf::Key::C:
       _canvas.clear();
       break;
+    case sf::Key::F:
+      _canvas.finalize();
+      break;
     case sf::Key::L:
       Canvas::load("assets/test.dat", _canvas);
       break;

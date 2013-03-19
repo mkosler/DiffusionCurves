@@ -6,8 +6,11 @@
 #include "Bezier.h"
 #include "Canvas.h"
 
-Canvas::Canvas()
-  : _arePointsVisible(true)
+Canvas::Canvas(unsigned width, unsigned height)
+  : _width(width),
+    _height(height),
+    _arePointsVisible(true),
+    _isFinalized(false)
 {
 }
 
@@ -21,11 +24,9 @@ bool Canvas::isBlack(float r, float g, float b)
   return (r + g + b) == 0;
 }
 
-float *Canvas::downsample(float *pixels, unsigned side)
+void Canvas::downsample(float *pixels, unsigned side)
 {
   unsigned nside = side / 2;
-  float *npixels = new float[nside * nside * 3];
-  std::fill(npixels, npixels + (nside * nside * 3), 0);
 
   for (unsigned i = 0; i < nside * nside; i++) {
     unsigned x = (i * 2) + ((i / nside) * side);
@@ -37,43 +38,41 @@ float *Canvas::downsample(float *pixels, unsigned side)
     if (!isBlack(pixels[x], pixels[x + 1], pixels[x + 2])) {
       count++;
 
-      npixels[i]     += pixels[x];
-      npixels[i + 1] += pixels[x + 1];
-      npixels[i + 2] += pixels[x + 2];
+      if (x != 0) {
+        pixels[i]     += pixels[x];
+        pixels[i + 1] += pixels[x + 1];
+        pixels[i + 2] += pixels[x + 2];
+      }
     }
 
     if (!isBlack(pixels[y], pixels[y + 1], pixels[y + 2])) {
       count++;
 
-      npixels[i]     += pixels[y];
-      npixels[i + 1] += pixels[y + 1];
-      npixels[i + 2] += pixels[y + 2];
+      pixels[i]     += pixels[y];
+      pixels[i + 1] += pixels[y + 1];
+      pixels[i + 2] += pixels[y + 2];
     }
 
     if (!isBlack(pixels[z], pixels[z + 1], pixels[z + 2])) {
       count++;
 
-      npixels[i]     += pixels[z];
-      npixels[i + 1] += pixels[z + 1];
-      npixels[i + 2] += pixels[z + 2];
+      pixels[i]     += pixels[z];
+      pixels[i + 1] += pixels[z + 1];
+      pixels[i + 2] += pixels[z + 2];
     }
 
     if (!isBlack(pixels[w], pixels[w + 1], pixels[w + 2])) {
       count++;
 
-      npixels[i]     += pixels[w];
-      npixels[i + 1] += pixels[w + 1];
-      npixels[i + 2] += pixels[w + 2];
+      pixels[i]     += pixels[w];
+      pixels[i + 1] += pixels[w + 1];
+      pixels[i + 2] += pixels[w + 2];
     }
 
-    npixels[i] /= count;
-    npixels[i + 1] /= count;
-    npixels[i + 2] /= count;
+    pixels[i] /= count;
+    pixels[i + 1] /= count;
+    pixels[i + 2] /= count;
   }
-
-  delete[] pixels;
-
-  return npixels;
 }
 
 void Canvas::addCurve(Curve<8> *curve)
@@ -96,6 +95,11 @@ void Canvas::clear()
   }
 }
 
+void Canvas::finalize()
+{
+  _isFinalized = true;
+}
+
 void Canvas::update(float dt)
 {
   for (size_t i = 0; i < _curves.size(); i++) {
@@ -105,11 +109,16 @@ void Canvas::update(float dt)
 
 void Canvas::draw()
 {
-  for (size_t i = 0; i < _curves.size(); i++) {
-    if (_arePointsVisible) {
-      _curves[i]->drawControlPoints();
+  if (_isFinalized) {
+    //for (unsigned i = _window.GetWidth(); i > 1; i /= 2) {
+    //}
+  } else {
+    for (size_t i = 0; i < _curves.size(); i++) {
+      if (_arePointsVisible) {
+        _curves[i]->drawControlPoints();
+      }
+      _curves[i]->drawCurve();
     }
-    _curves[i]->drawCurve();
   }
 }
 

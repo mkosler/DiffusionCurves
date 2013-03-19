@@ -9,19 +9,22 @@
 class Canvas
 {
   private:
+    unsigned _width, _height;
+
     std::vector<Curve<8>*> _curves;
-    bool _arePointsVisible;
+    bool _arePointsVisible, _isFinalized;
 
     bool isBlack(float r, float g, float b);
-    float *downsample(float *pixels, unsigned side);
+    void downsample(float *pixels, unsigned side);
 
   public:
-    Canvas();
+    Canvas(unsigned width, unsigned height);
     ~Canvas();
 
     void addCurve(Curve<8> *curve);
     void togglePointVisibility();
     void clear();
+    void finalize();
 
     void update(float dt);
     void draw();

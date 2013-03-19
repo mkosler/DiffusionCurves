@@ -1,4 +1,7 @@
+#include <algorithm>
 #include <fstream>
+
+#include "FreeImage.h"
 
 #include "Bezier.h"
 #include "Canvas.h"
@@ -11,6 +14,66 @@ Canvas::Canvas()
 Canvas::~Canvas()
 {
   clear();
+}
+
+bool Canvas::isBlack(float r, float g, float b)
+{
+  return (r + g + b) == 0;
+}
+
+float *Canvas::downsample(float *pixels, unsigned side)
+{
+  unsigned nside = side / 2;
+  float *npixels = new float[nside * nside * 3];
+  std::fill(npixels, npixels + (nside * nside * 3), 0);
+
+  for (unsigned i = 0; i < nside * nside; i++) {
+    unsigned x = (i * 2) + ((i / nside) * side);
+    unsigned y = x + 3;
+    unsigned z = x + (side * 3);
+    unsigned w = y + (side * 3);
+
+    unsigned count = 0;
+    if (!isBlack(pixels[x], pixels[x + 1], pixels[x + 2])) {
+      count++;
+
+      npixels[i]     += pixels[x];
+      npixels[i + 1] += pixels[x + 1];
+      npixels[i + 2] += pixels[x + 2];
+    }
+
+    if (!isBlack(pixels[y], pixels[y + 1], pixels[y + 2])) {
+      count++;
+
+      npixels[i]     += pixels[y];
+      npixels[i + 1] += pixels[y + 1];
+      npixels[i + 2] += pixels[y + 2];
+    }
+
+    if (!isBlack(pixels[z], pixels[z + 1], pixels[z + 2])) {
+      count++;
+
+      npixels[i]     += pixels[z];
+      npixels[i + 1] += pixels[z + 1];
+      npixels[i + 2] += pixels[z + 2];
+    }
+
+    if (!isBlack(pixels[w], pixels[w + 1], pixels[w + 2])) {
+      count++;
+
+      npixels[i]     += pixels[w];
+      npixels[i + 1] += pixels[w + 1];
+      npixels[i + 2] += pixels[w + 2];
+    }
+
+    npixels[i] /= count;
+    npixels[i + 1] /= count;
+    npixels[i + 2] /= count;
+  }
+
+  delete[] pixels;
+
+  return npixels;
 }
 
 void Canvas::addCurve(Curve<8> *curve)
@@ -48,6 +111,20 @@ void Canvas::draw()
     }
     _curves[i]->drawCurve();
   }
+}
+
+void Canvas::screenshot(std::string filename, unsigned width, unsigned height)
+{
+  filename = "assets/" + filename;
+
+  unsigned char *pixels = new unsigned char[width * height * 3];
+  glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+
+  FIBITMAP *image = FreeImage_ConvertFromRawBits(pixels, width, height, 3 * width, 24, 0xFF0000, 0x00FF00, 0x0000FF, false);
+  FreeImage_Save(FIF_BMP, image, filename.c_str(), 0);
+
+  delete image;
+  delete[] pixels;
 }
 
 std::ostream &operator<<(std::ostream &os, const Canvas &c)

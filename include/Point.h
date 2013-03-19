@@ -8,7 +8,7 @@
 
 #include <GL/gl.h>
 
-#define POINT_SIZE 5
+#define POINT_SIZE 10
 
 template<int n>
 class Point
@@ -131,8 +131,11 @@ class Point
       float x = _data[0], y = _data[1];
 
       glBegin(GL_QUADS);
+        glColor3f(_data[2], _data[3], _data[4]);
         glVertex2f(x - POINT_SIZE / 2.0f, y + POINT_SIZE / 2.0f);
         glVertex2f(x - POINT_SIZE / 2.0f, y - POINT_SIZE / 2.0f);
+
+        glColor3f(_data[5], _data[6], _data[7]);
         glVertex2f(x + POINT_SIZE / 2.0f, y - POINT_SIZE / 2.0f);
         glVertex2f(x + POINT_SIZE / 2.0f, y + POINT_SIZE / 2.0f);
       glEnd();

@@ -12,6 +12,9 @@ class Canvas
     std::vector<Curve<8>*> _curves;
     bool _arePointsVisible;
 
+    bool isBlack(float r, float g, float b);
+    float *downsample(float *pixels, unsigned side);
+
   public:
     Canvas();
     ~Canvas();
@@ -22,6 +25,8 @@ class Canvas
 
     void update(float dt);
     void draw();
+
+    void screenshot(std::string filename, unsigned width, unsigned height);
 
     friend std::ostream &operator<<(std::ostream &os, const Canvas &c);
 

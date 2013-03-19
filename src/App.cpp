@@ -35,12 +35,15 @@ void App::handleKeyPressed(sf::Event::KeyEvent &event)
     case sf::Key::L:
       Canvas::load("assets/test.dat", _canvas);
       break;
-    case sf::Key::V:
-      _canvas.togglePointVisibility();
+    case sf::Key::P:
+      _canvas.screenshot("test.bmp", _window.GetWidth(), _window.GetHeight());
       break;
     case sf::Key::S:
       std::cout << "Saving canvas..." << std::endl;
       Canvas::save("assets/test.dat", _canvas);
+      break;
+    case sf::Key::V:
+      _canvas.togglePointVisibility();
       break;
     default:
       break;

@@ -1,4 +1,5 @@
 *~
 *.sw?
 DiffusionCurves
-src/*.o
+*.o
+*.bmp

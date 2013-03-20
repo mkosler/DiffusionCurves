@@ -1,3 +1,4 @@
+#include <cmath>
 #include <algorithm>
 #include <fstream>
 #include <sstream>
@@ -25,15 +26,15 @@ bool Canvas::isBlack(float r, float g, float b)
   return (r + g + b) == 0;
 }
 
-void Canvas::downsample(float *pixels, float *npixels, unsigned side)
+void Canvas::downsample(float *pixels, float *npixels, unsigned size)
 {
-  unsigned nside = side / 2;
-  for (unsigned i = 0; i < nside * nside; i++) {
-    unsigned row = i / nside;
+  unsigned nsize = size / 2;
+  for (unsigned i = 0; i < nsize * nsize; i++) {
+    unsigned row = i / nsize;
 
-    unsigned x = (i * 2) + (row * side);
+    unsigned x = (i * 2) + (row * size);
     unsigned y = x + 1;
-    unsigned z = x + side;
+    unsigned z = x + size;
     unsigned w = z + 1;
 
     unsigned count = 0;
@@ -75,6 +76,10 @@ void Canvas::downsample(float *pixels, float *npixels, unsigned side)
       npixels[(3 * i) + 2] /= count;
     }
   }
+}
+
+void Canvas::upsample(float *pixels, float *npixels, unsigned size)
+{
 }
 
 void Canvas::addCurve(Curve<8> *curve)
@@ -120,26 +125,34 @@ void Canvas::draw()
   glFlush();
 
   if (_isFinalized) {
-    _isFinalized = false;
+    std::vector<float*> buffers;
 
     for (unsigned size = _width; size > 1; size /= 2) {
+      // Take a screenshot
       std::ostringstream oss;
       oss << "test_" << size << ".bmp";
-
       screenshot(oss.str(), size, size);
 
+      // Read the pixels from the current buffer
       float *pixels = new float[size * size * 3];
       glReadPixels(0, 0, size, size, GL_RGB, GL_FLOAT, pixels);
 
+      // Add it to the buffer collection
+      buffers.push_back(pixels);
+
+      // Create a new, smaller buffer, and fill with 0
       float *npixels = new float[(size / 2) * (size / 2) * 3];
       std::fill(npixels, npixels + ((size / 2) * (size / 2) * 3), 0);
 
+      // Downsample the image
       downsample(pixels, npixels, size);
 
+      // Draw the new buffer onto the screen
       glDrawPixels(size / 2, size / 2, GL_RGB, GL_FLOAT, npixels);
       glFlush();
 
-      delete[] pixels;
+      // Delete the new buffer
+      delete[] npixels;
     }
   }
 }
@@ -147,8 +160,6 @@ void Canvas::draw()
 void Canvas::screenshot(std::string filename, unsigned width, unsigned height)
 {
   filename = "assets/" + filename;
-
-  std::cout << "Filename: " << filename << std::endl;
 
   unsigned char *pixels = new unsigned char[width * height * 3];
   glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);

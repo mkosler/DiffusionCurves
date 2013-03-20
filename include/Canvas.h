@@ -17,6 +17,8 @@ class Canvas
     bool isBlack(float r, float g, float b);
     void downsample(float *pixels, unsigned side);
 
+    void first();
+
   public:
     Canvas(unsigned width, unsigned height);
     ~Canvas();

@@ -1,5 +1,7 @@
+#include <cstdio>
 #include <algorithm>
 #include <fstream>
+#include <sstream>
 
 #include "FreeImage.h"
 
@@ -27,51 +29,72 @@ bool Canvas::isBlack(float r, float g, float b)
 void Canvas::downsample(float *pixels, unsigned side)
 {
   unsigned nside = side / 2;
-
   for (unsigned i = 0; i < nside * nside; i++) {
-    unsigned x = (i * 2) + ((i / nside) * side);
-    unsigned y = x + 3;
-    unsigned z = x + (side * 3);
-    unsigned w = y + (side * 3);
+    unsigned row = i / nside;
+
+    unsigned x = (i * nside) + (row * side);
+    unsigned y = x + 1;
+    unsigned z = x + ((row + 1) * side);
+    unsigned w = z + 1;
 
     unsigned count = 0;
-    if (!isBlack(pixels[x], pixels[x + 1], pixels[x + 2])) {
+    if (!isBlack(pixels[(3 * x)], pixels[(3 * x) + 1], pixels[(3 * x) + 2])) {
       count++;
 
       if (x != 0) {
-        pixels[i]     += pixels[x];
-        pixels[i + 1] += pixels[x + 1];
-        pixels[i + 2] += pixels[x + 2];
+        pixels[(3 * i)]     += pixels[(3 * x)];
+        pixels[(3 * i) + 1] += pixels[(3 * x) + 1];
+        pixels[(3 * i) + 2] += pixels[(3 * x) + 2];
       }
     }
 
-    if (!isBlack(pixels[y], pixels[y + 1], pixels[y + 2])) {
+    if (!isBlack(pixels[(3 * y)], pixels[(3 * y) + 1], pixels[(3 * y) + 2])) {
       count++;
 
-      pixels[i]     += pixels[y];
-      pixels[i + 1] += pixels[y + 1];
-      pixels[i + 2] += pixels[y + 2];
+      pixels[(3 * i)]     += pixels[(3 * y)];
+      pixels[(3 * i) + 1] += pixels[(3 * y) + 1];
+      pixels[(3 * i) + 2] += pixels[(3 * y) + 2];
     }
 
-    if (!isBlack(pixels[z], pixels[z + 1], pixels[z + 2])) {
+    if (!isBlack(pixels[(3 * z)], pixels[(3 * z) + 1], pixels[(3 * z) + 2])) {
       count++;
 
-      pixels[i]     += pixels[z];
-      pixels[i + 1] += pixels[z + 1];
-      pixels[i + 2] += pixels[z + 2];
+      pixels[(3 * i)]     += pixels[(3 * z)];
+      pixels[(3 * i) + 1] += pixels[(3 * z) + 1];
+      pixels[(3 * i) + 2] += pixels[(3 * z) + 2];
     }
 
-    if (!isBlack(pixels[w], pixels[w + 1], pixels[w + 2])) {
+    if (!isBlack(pixels[(3 * w)], pixels[(3 * w) + 1], pixels[(3 * w) + 2])) {
       count++;
 
-      pixels[i]     += pixels[w];
-      pixels[i + 1] += pixels[w + 1];
-      pixels[i + 2] += pixels[w + 2];
+      pixels[(3 * i)]     += pixels[(3 * w)];
+      pixels[(3 * i) + 1] += pixels[(3 * w) + 1];
+      pixels[(3 * i) + 2] += pixels[(3 * w) + 2];
     }
 
-    pixels[i] /= count;
-    pixels[i + 1] /= count;
-    pixels[i + 2] /= count;
+    pixels[(3 * i)]     /= count;
+    pixels[(3 * i) + 1] /= count;
+    pixels[(3 * i) + 2] /= count;
+  }
+}
+
+void Canvas::first()
+{
+  for (unsigned size = _width; size > 2; size /= 2) {
+    std::ostringstream oss;
+    oss << "test_" << size << ".bmp";
+
+    screenshot(oss.str(), size, size);
+
+    float *pixels = new float[size * size * 3];
+    glReadPixels(0, 0, size, size, GL_RGB, GL_FLOAT, pixels);
+
+    downsample(pixels, size);
+
+    glDrawPixels(size / 2, size / 2, GL_RGB, GL_FLOAT, pixels);
+    glFlush();
+
+    delete[] pixels;
   }
 }
 
@@ -109,22 +132,25 @@ void Canvas::update(float dt)
 
 void Canvas::draw()
 {
-  if (_isFinalized) {
-    //for (unsigned i = _window.GetWidth(); i > 1; i /= 2) {
-    //}
-  } else {
-    for (size_t i = 0; i < _curves.size(); i++) {
-      if (_arePointsVisible) {
-        _curves[i]->drawControlPoints();
-      }
-      _curves[i]->drawCurve();
+  for (size_t i = 0; i < _curves.size(); i++) {
+    if (_arePointsVisible) {
+      _curves[i]->drawControlPoints();
     }
+    _curves[i]->drawCurve();
+  }
+  glFlush();
+
+  if (_isFinalized) {
+    _isFinalized = false;
+    first();
   }
 }
 
 void Canvas::screenshot(std::string filename, unsigned width, unsigned height)
 {
   filename = "assets/" + filename;
+
+  std::cout << "Filename: " << filename << std::endl;
 
   unsigned char *pixels = new unsigned char[width * height * 3];
   glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);

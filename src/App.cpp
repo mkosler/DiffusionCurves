@@ -117,22 +117,6 @@ void App::initialize(sf::VideoMode mode, std::string title)
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-
-  //Point<8> p;
-
-  //_leftColor[0] = 1.0f; _leftColor[1] = 0.0f; _leftColor[2] = 0.0f;
-  //_rightColor[0] = 0.0f; _rightColor[1] = 0.0f; _rightColor[2] = 1.0f;
-  //addPoint(50.0f, 50.0f);
-
-  //_leftColor[0] = 0.0f; _leftColor[1] = 1.0f; _leftColor[2] = 0.0f;
-  //_rightColor[0] = 0.0f; _rightColor[1] = 1.0f; _rightColor[2] = 0.0f;
-  //addPoint(462.0f, 256.0f);
-
-  //_leftColor[0] = 0.0f; _leftColor[1] = 0.0f; _leftColor[2] = 1.0f;
-  //_rightColor[0] = 1.0f; _rightColor[1] = 0.0f; _rightColor[2] = 0.0f;
-  //addPoint(50.0f, 462.0f);
-
-  //_canvas.addCurve(new Bezier<8>(_pointBuffer, 2));
 }
 
 int App::run()
@@ -154,7 +138,7 @@ int App::run()
 }
 
 sf::Window App::_window;
-Canvas App::_canvas;
+Canvas App::_canvas(512, 512);
 std::vector<Point<8> > App::_pointBuffer;
 float App::_leftColor[3] = { 0.0f, 0.0f, 0.0f };
 float App::_rightColor[3] = { 0.0f, 0.0f, 0.0f };

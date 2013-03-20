@@ -1,4 +1,3 @@
-#include <cstdio>
 #include <algorithm>
 #include <fstream>
 #include <sstream>
@@ -26,75 +25,55 @@ bool Canvas::isBlack(float r, float g, float b)
   return (r + g + b) == 0;
 }
 
-void Canvas::downsample(float *pixels, unsigned side)
+void Canvas::downsample(float *pixels, float *npixels, unsigned side)
 {
   unsigned nside = side / 2;
   for (unsigned i = 0; i < nside * nside; i++) {
     unsigned row = i / nside;
 
-    unsigned x = (i * nside) + (row * side);
+    unsigned x = (i * 2) + (row * side);
     unsigned y = x + 1;
-    unsigned z = x + ((row + 1) * side);
+    unsigned z = x + side;
     unsigned w = z + 1;
 
     unsigned count = 0;
     if (!isBlack(pixels[(3 * x)], pixels[(3 * x) + 1], pixels[(3 * x) + 2])) {
       count++;
 
-      if (x != 0) {
-        pixels[(3 * i)]     += pixels[(3 * x)];
-        pixels[(3 * i) + 1] += pixels[(3 * x) + 1];
-        pixels[(3 * i) + 2] += pixels[(3 * x) + 2];
-      }
+      npixels[(3 * i)]     += pixels[(3 * x)];
+      npixels[(3 * i) + 1] += pixels[(3 * x) + 1];
+      npixels[(3 * i) + 2] += pixels[(3 * x) + 2];
     }
 
     if (!isBlack(pixels[(3 * y)], pixels[(3 * y) + 1], pixels[(3 * y) + 2])) {
       count++;
 
-      pixels[(3 * i)]     += pixels[(3 * y)];
-      pixels[(3 * i) + 1] += pixels[(3 * y) + 1];
-      pixels[(3 * i) + 2] += pixels[(3 * y) + 2];
+      npixels[(3 * i)]     += pixels[(3 * y)];
+      npixels[(3 * i) + 1] += pixels[(3 * y) + 1];
+      npixels[(3 * i) + 2] += pixels[(3 * y) + 2];
     }
 
     if (!isBlack(pixels[(3 * z)], pixels[(3 * z) + 1], pixels[(3 * z) + 2])) {
       count++;
 
-      pixels[(3 * i)]     += pixels[(3 * z)];
-      pixels[(3 * i) + 1] += pixels[(3 * z) + 1];
-      pixels[(3 * i) + 2] += pixels[(3 * z) + 2];
+      npixels[(3 * i)]     += pixels[(3 * z)];
+      npixels[(3 * i) + 1] += pixels[(3 * z) + 1];
+      npixels[(3 * i) + 2] += pixels[(3 * z) + 2];
     }
 
     if (!isBlack(pixels[(3 * w)], pixels[(3 * w) + 1], pixels[(3 * w) + 2])) {
       count++;
 
-      pixels[(3 * i)]     += pixels[(3 * w)];
-      pixels[(3 * i) + 1] += pixels[(3 * w) + 1];
-      pixels[(3 * i) + 2] += pixels[(3 * w) + 2];
+      npixels[(3 * i)]     += pixels[(3 * w)];
+      npixels[(3 * i) + 1] += pixels[(3 * w) + 1];
+      npixels[(3 * i) + 2] += pixels[(3 * w) + 2];
     }
 
-    pixels[(3 * i)]     /= count;
-    pixels[(3 * i) + 1] /= count;
-    pixels[(3 * i) + 2] /= count;
-  }
-}
-
-void Canvas::first()
-{
-  for (unsigned size = _width; size > 2; size /= 2) {
-    std::ostringstream oss;
-    oss << "test_" << size << ".bmp";
-
-    screenshot(oss.str(), size, size);
-
-    float *pixels = new float[size * size * 3];
-    glReadPixels(0, 0, size, size, GL_RGB, GL_FLOAT, pixels);
-
-    downsample(pixels, size);
-
-    glDrawPixels(size / 2, size / 2, GL_RGB, GL_FLOAT, pixels);
-    glFlush();
-
-    delete[] pixels;
+    if (count > 0) {
+      npixels[(3 * i)]     /= count;
+      npixels[(3 * i) + 1] /= count;
+      npixels[(3 * i) + 2] /= count;
+    }
   }
 }
 
@@ -142,7 +121,26 @@ void Canvas::draw()
 
   if (_isFinalized) {
     _isFinalized = false;
-    first();
+
+    for (unsigned size = _width; size > 1; size /= 2) {
+      std::ostringstream oss;
+      oss << "test_" << size << ".bmp";
+
+      screenshot(oss.str(), size, size);
+
+      float *pixels = new float[size * size * 3];
+      glReadPixels(0, 0, size, size, GL_RGB, GL_FLOAT, pixels);
+
+      float *npixels = new float[(size / 2) * (size / 2) * 3];
+      std::fill(npixels, npixels + ((size / 2) * (size / 2) * 3), 0);
+
+      downsample(pixels, npixels, size);
+
+      glDrawPixels(size / 2, size / 2, GL_RGB, GL_FLOAT, npixels);
+      glFlush();
+
+      delete[] pixels;
+    }
   }
 }
 

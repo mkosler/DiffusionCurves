@@ -15,9 +15,7 @@ class Canvas
     bool _arePointsVisible, _isFinalized;
 
     bool isBlack(float r, float g, float b);
-    void downsample(float *pixels, unsigned side);
-
-    void first();
+    void downsample(float *pixels, float *npixels, unsigned side);
 
   public:
     Canvas(unsigned width, unsigned height);

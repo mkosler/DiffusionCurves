@@ -104,10 +104,12 @@ void App::initialize(sf::VideoMode mode, std::string title)
 {
   _window.Create(mode, title);
 
+  std::cout << "AntialiasingLevel: " << _window.GetSettings().AntialiasingLevel << std::endl;
+
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
   glDisable(GL_DEPTH_TEST);
-  glShadeModel(GL_SMOOTH);
+  glShadeModel(GL_FLAT);
   glDisable(GL_CULL_FACE);
 
   glMatrixMode(GL_PROJECTION);

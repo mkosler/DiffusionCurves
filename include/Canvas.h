@@ -9,7 +9,7 @@
 class Canvas
 {
   private:
-    unsigned _width, _height;
+    unsigned _size;
 
     std::vector<Curve<8>*> _curves;
     bool _arePointsVisible, _isFinalized;
@@ -17,9 +17,10 @@ class Canvas
     bool isBlack(float r, float g, float b);
 
     std::vector<float> downsample(std::vector<float> pixels);
+    void upsample(std::vector<float> pixels, std::vector<float> &upPixels);
 
   public:
-    Canvas(unsigned width, unsigned height);
+    Canvas(unsigned size);
     ~Canvas();
 
     void addCurve(Curve<8> *curve);
@@ -30,7 +31,7 @@ class Canvas
     void update(float dt);
     void draw();
 
-    void screenshot(std::string filename, unsigned width, unsigned height);
+    void screenshot(std::string filename, unsigned size);
 
     friend std::ostream &operator<<(std::ostream &os, const Canvas &c);
 

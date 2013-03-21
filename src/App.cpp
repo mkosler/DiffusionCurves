@@ -38,9 +38,6 @@ void App::handleKeyPressed(sf::Event::KeyEvent &event)
     case sf::Key::L:
       Canvas::load("assets/test.dat", _canvas);
       break;
-    case sf::Key::P:
-      _canvas.screenshot("test.bmp", _window.GetWidth(), _window.GetHeight());
-      break;
     case sf::Key::S:
       std::cout << "Saving canvas..." << std::endl;
       Canvas::save("assets/test.dat", _canvas);
@@ -140,7 +137,7 @@ int App::run()
 }
 
 sf::Window App::_window;
-Canvas App::_canvas(512, 512);
+Canvas App::_canvas(512);
 std::vector<Point<8> > App::_pointBuffer;
 float App::_leftColor[3] = { 0.0f, 0.0f, 0.0f };
 float App::_rightColor[3] = { 0.0f, 0.0f, 0.0f };

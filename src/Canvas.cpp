@@ -9,9 +9,8 @@
 #include "Bezier.h"
 #include "Canvas.h"
 
-Canvas::Canvas(unsigned width, unsigned height)
-  : _width(width),
-    _height(height),
+Canvas::Canvas(unsigned size)
+  : _size(size),
     _arePointsVisible(true),
     _isFinalized(false)
 {
@@ -32,9 +31,7 @@ std::vector<float> Canvas::downsample(std::vector<float> pixels)
   unsigned sz = sqrt(pixels.size() / 3);
   unsigned dsz = sz / 2;
 
-  std::cout << "sz = " << sz << ", dsz = " << dsz << std::endl;
   std::vector<float> downPixels(dsz * dsz * 3, 0);
-
   for (size_t i = 0; i < (downPixels.size() / 3); i++) {
     unsigned row = i / dsz;
 
@@ -83,9 +80,50 @@ std::vector<float> Canvas::downsample(std::vector<float> pixels)
     }
   }
 
-  std::cout << "Finishing downsample" << std::endl;
-
   return downPixels;
+}
+
+void Canvas::upsample(std::vector<float> pixels, std::vector<float> &upPixels)
+{
+  unsigned sz = sqrt(pixels.size() / 3);
+  unsigned usz = sz * 2;
+
+  std::cout << "Beginning upsample for loop" << std::endl
+            << "pixels.size() / 3 = " << pixels.size() / 3 << std::endl;
+  for (size_t i = 0; i < (pixels.size() / 3); i++) {
+    unsigned row = i / sz;
+
+    unsigned x = (i * 2) + (row * usz);
+    unsigned y = x + 1;
+    unsigned z = x + usz;
+    unsigned w = z + 1;
+
+    if (isBlack(upPixels[(3 * x)], upPixels[(3 * x) + 1], upPixels[(3 * x) + 2])) {
+      upPixels[(3 * x)]     = pixels[(3 * i)];
+      upPixels[(3 * x) + 1] = pixels[(3 * i) + 1];
+      upPixels[(3 * x) + 2] = pixels[(3 * i) + 2];
+    }
+
+    if (isBlack(upPixels[(3 * y)], upPixels[(3 * y) + 1], upPixels[(3 * y) + 2])) {
+      upPixels[(3 * y)]     = pixels[(3 * i)];
+      upPixels[(3 * y) + 1] = pixels[(3 * i) + 1];
+      upPixels[(3 * y) + 2] = pixels[(3 * i) + 2];
+    }
+
+    if (isBlack(upPixels[(3 * z)], upPixels[(3 * z) + 1], upPixels[(3 * z) + 2])) {
+      upPixels[(3 * z)]     = pixels[(3 * i)];
+      upPixels[(3 * z) + 1] = pixels[(3 * i) + 1];
+      upPixels[(3 * z) + 2] = pixels[(3 * i) + 2];
+    }
+
+    if (isBlack(upPixels[(3 * w)], upPixels[(3 * w) + 1], upPixels[(3 * w) + 2])) {
+      upPixels[(3 * w)]     = pixels[(3 * i)];
+      upPixels[(3 * w) + 1] = pixels[(3 * i) + 1];
+      upPixels[(3 * w) + 2] = pixels[(3 * i) + 2];
+    }
+  }
+
+  std::cout << "Finalizing upsample" << std::endl;
 }
 
 void Canvas::addCurve(Curve<8> *curve)
@@ -131,16 +169,17 @@ void Canvas::draw()
   glFlush();
 
   if (_isFinalized) {
+    _isFinalized = false;
+
     std::stack<std::vector<float> > buffers;
 
     for (unsigned size = 512; size > 1; size /= 2) {
       // Take a screenshot
       std::ostringstream oss;
       oss << "test_down_" << size << ".bmp";
-      screenshot(oss.str(), size, size);
+      screenshot(oss.str(), size);
 
       // Read the pixels from the current buffer
-      //float *pixels = new float[size * size * 3];
       std::vector<float> pixels(size * size * 3, 0.0f);
       glReadPixels(0, 0, size, size, GL_RGB, GL_FLOAT, &pixels[0]);
 
@@ -151,50 +190,58 @@ void Canvas::draw()
       // Downsample the image
       std::vector<float> npixels = downsample(pixels);
 
+      std::cout << "Drawing downsample" << std::endl;
+
       // Draw the new buffer onto the screen
       glDrawPixels(size / 2, size / 2, GL_RGB, GL_FLOAT, &npixels[0]);
       glFlush();
     }
 
-    //unsigned size = 2;
-    //while (!buffers.empty()) {
-      //std::vector<float> oldBuffer = buffers.top(); buffers.pop();
-      //std::vector<float> upBuffer = buffers.top();
+    std::cout << "Beginning to pop buffers" << std::endl;
+    while (true) {
+      // Pop the top buffer
+      std::vector<float> oldBuffer = buffers.top();
+      buffers.pop();
 
-      //if (buffers.empty()) {
-        //break;
-      //}
+      // Check if buffers is empty
+      std::cout << "buffers.empty() = " << (buffers.empty() ? "true" : "false") << std::endl;
+      if (buffers.empty()) {
+        break;
+      }
 
-      //std::cout << "Upsampling from buffer of size " << size << " to one of size " << size * 2 << std::endl;
-      //upsample(oldBuffer, upBuffer, size);
+      // Get the next biggest buffer, but don't pop
+      std::vector<float> upBuffer = buffers.top();
 
-      //size *= 2;
-      //glDrawPixels(size, size, GL_RGB, GL_FLOAT, upBuffer);
-      //glFlush();
+      // Upsample that buffer
+      upsample(oldBuffer, upBuffer);
 
-      //std::ostringstream oss;
-      //oss << "test_up_" << size << ".bmp";
-      //screenshot(oss.str(), size, size);
+      unsigned sz = sqrt(upBuffer.size() / 3);
 
-      //delete[] oldBuffer;
-    //}
+      std::cout << "Drawing onto the screen" << std::endl;
+
+      // Draw it onto the screen
+      glDrawPixels(sz, sz, GL_RGB, GL_FLOAT, &upBuffer[0]);
+      glFlush();
+
+      // Take a screenshot
+      std::ostringstream oss;
+      oss << "test_up_" << sz << ".bmp";
+      screenshot(oss.str(), sz);
+    }
   }
 }
 
-void Canvas::screenshot(std::string filename, unsigned width, unsigned height)
+void Canvas::screenshot(std::string filename, unsigned size)
 {
-  filename = "assets/" + filename;
+  //filename = "assets/" + filename;
 
-  std::cout << "Canvas::screenshot(" << filename << ")" << std::endl;
+  //std::vector<unsigned char> pixels(size * size * 3, 0);
+  //glReadPixels(0, 0, size, size, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0]);
 
-  unsigned char *pixels = new unsigned char[width * height * 3];
-  glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+  //FIBITMAP *image = FreeImage_ConvertFromRawBits(&pixels[0], size, size, 3 * size, 24, 0xFF0000, 0x00FF00, 0x0000FF, false);
+  //FreeImage_Save(FIF_BMP, image, filename.c_str(), 0);
 
-  FIBITMAP *image = FreeImage_ConvertFromRawBits(pixels, width, height, 3 * width, 24, 0xFF0000, 0x00FF00, 0x0000FF, false);
-  FreeImage_Save(FIF_BMP, image, filename.c_str(), 0);
-
-  FreeImage_Unload(image);
-  delete[] pixels;
+  //FreeImage_Unload(image);
 }
 
 std::ostream &operator<<(std::ostream &os, const Canvas &c)

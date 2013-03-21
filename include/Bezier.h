@@ -62,6 +62,8 @@ class Bezier
 
     void initialize()
     {
+      this->_interpolants.clear();
+
       for (float i = 0.0f; i < 1.0f; i += this->_step) {
         this->_interpolants.push_back(interpolate(i));
       }

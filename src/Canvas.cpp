@@ -9,13 +9,15 @@
 #include "Bezier.h"
 #include "Canvas.h"
 
-#define SMOOTH_ITERATIONS 1000
+#define SMOOTH_ITERATIONS 100
 
 Canvas::Canvas(unsigned size)
   : _size(size),
     _arePointsVisible(true),
     _isFinalized(false),
-    _hasDiffusionCurve(false)
+    _hasDiffusionCurve(false),
+    _curveIndex(-1),
+    _selectionIndex(-1)
 {
 }
 
@@ -189,7 +191,6 @@ void Canvas::smooth(std::vector<float> &pixels, std::vector<bool> mask)
 
 void Canvas::addCurve(Curve<8> *curve)
 {
-  curve->initialize();
   _curves.push_back(curve);
 }
 
@@ -200,6 +201,8 @@ void Canvas::togglePointVisibility()
 
 void Canvas::clear()
 {
+  _isFinalized = _hasDiffusionCurve = false;
+  _diffusionCurve.clear();
   _arePointsVisible = true;
   while (!_curves.empty()) {
     delete _curves.back();
@@ -210,13 +213,16 @@ void Canvas::clear()
 void Canvas::finalize()
 {
   _isFinalized = true;
+  _arePointsVisible = false;
+}
+
+bool Canvas::isFinalized() const
+{
+  return _isFinalized;
 }
 
 void Canvas::update(float dt)
 {
-  for (size_t i = 0; i < _curves.size(); i++) {
-    _curves[i]->update(dt);
-  }
 }
 
 void Canvas::draw()
@@ -235,8 +241,6 @@ void Canvas::draw()
   glFlush();
 
   if (_isFinalized) {
-    _isFinalized = false;
-
     std::stack<std::vector<float> > buffers;
 
     for (unsigned size = 512; size > 1; size /= 2) {
@@ -296,6 +300,28 @@ void Canvas::draw()
 
     _hasDiffusionCurve = true;
   }
+}
+
+void Canvas::selectPoint(sf::Rect<int> rect)
+{
+  for (size_t i = 0; i < _curves.size(); i++) {
+    for (size_t j = 0; j < _curves[i]->_controlPoints.size(); j++) {
+      Point<8> p = _curves[i]->_controlPoints[j];
+      if (rect.Contains(p[0], p[1])) {
+        _curveIndex = i; _selectionIndex = j;
+        return;
+      }
+    }
+  }
+
+  _curveIndex = _selectionIndex = -1;
+}
+
+void Canvas::moveSelectedPoint(float x, float y)
+{
+  if (_curveIndex < 0 || _selectionIndex < 0) return;
+
+  _curves[_curveIndex]->updateLocation(_selectionIndex, x, y);
 }
 
 void Canvas::screenshot(std::string filename, unsigned size)

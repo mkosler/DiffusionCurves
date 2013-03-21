@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vector>
 
+#include <SFML/Graphics.hpp>
+
 #include "Curve.h"
 
 class Canvas
@@ -13,6 +15,7 @@ class Canvas
 
     std::vector<Curve<8>*> _curves;
     bool _arePointsVisible, _isFinalized, _hasDiffusionCurve;
+    int _curveIndex, _selectionIndex;
 
     std::vector<float> _diffusionCurve;
 
@@ -33,8 +36,13 @@ class Canvas
     void clear();
     void finalize();
 
+    bool isFinalized() const;
+
     void update(float dt);
     void draw();
+
+    void selectPoint(sf::Rect<int> rect);
+    void moveSelectedPoint(float x, float y);
 
     void screenshot(std::string filename, unsigned size);
 

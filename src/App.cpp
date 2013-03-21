@@ -15,6 +15,12 @@ void App::handleEvent(sf::Event &event)
     case sf::Event::MouseButtonPressed:
       handleMouseButtonPressed(event.MouseButton);
       break;
+    case sf::Event::MouseButtonReleased:
+      handleMouseButtonReleased(event.MouseButton);
+      break;
+    case sf::Event::MouseMoved:
+      handleMouseMove(event.MouseMove);
+      break;
     case sf::Event::Resized:
       glViewport(0, event.Size.Width, event.Size.Height, 0);
       break;
@@ -34,6 +40,10 @@ void App::handleKeyPressed(sf::Event::KeyEvent &event)
       break;
     case sf::Key::C:
       _canvas.clear();
+      break;
+    case sf::Key::E:
+      _isEditMode = !_isEditMode;
+      std::cout << "_isEditMode = " << (_isEditMode ? "true" : "false") << std::endl;
       break;
     case sf::Key::F:
       _canvas.finalize();
@@ -65,12 +75,49 @@ void App::handleMouseButtonPressed(sf::Event::MouseButtonEvent &event)
 {
   switch (event.Button) {
     case sf::Mouse::Left:
-      addPoint(event.X, event.Y);
+      if (!_canvas.isFinalized()) {
+        if (_isEditMode) {
+        } else {
+          addPoint(event.X, event.Y);
+        }
+      }
       break;
     case sf::Mouse::Right:
+      if (!_canvas.isFinalized()) {
+        if (_isEditMode) {
+          _selectionRect.Left = event.X; _selectionRect.Top = event.Y;
+        } else {
+          pushCurve();
+        }
+      }
       break;
     default:
       break;
+  }
+}
+
+void App::handleMouseButtonReleased(sf::Event::MouseButtonEvent &event)
+{
+  switch (event.Button) {
+    case sf::Mouse::Right:
+      if (_isEditMode) {
+        _canvas.selectPoint(_selectionRect);
+        _selectionRect.Left = _selectionRect.Top = _selectionRect.Right = _selectionRect.Bottom = 0;
+      }
+      break;
+    default:
+      break;
+  }
+}
+
+void App::handleMouseMove(sf::Event::MouseMoveEvent &event)
+{
+  if (_isEditMode) {
+    if (_window.GetInput().IsMouseButtonDown(sf::Mouse::Left)) {
+      _canvas.moveSelectedPoint(event.X, event.Y);
+    } else if (_window.GetInput().IsMouseButtonDown(sf::Mouse::Right)) {
+      _selectionRect.Right = event.X; _selectionRect.Bottom = event.Y;
+    }
   }
 }
 
@@ -83,31 +130,40 @@ void App::draw()
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  for (size_t i = 0; i < _pointBuffer.size(); i++) {
+    _pointBuffer[i].draw();
+  }
+
+  glColor3f(0.0f, 1.0f, 0.0f);
+  glBegin(GL_LINE_LOOP);
+    glVertex2i(_selectionRect.Left, _selectionRect.Top);
+    glVertex2i(_selectionRect.Left, _selectionRect.Bottom);
+    glVertex2i(_selectionRect.Right, _selectionRect.Bottom);
+    glVertex2i(_selectionRect.Right, _selectionRect.Top);
+  glEnd();
+
   _canvas.draw();
 }
 
 void App::addPoint(float x, float y)
 {
-  unsigned hex;
-  std::cout << "Please enter the hex value of the left side (i.e. 0xFF00FF): ";
-  std::cin >> hex;
+  float lr, lg, lb, rr, rg, rb;
+  std::cout << "Please enter left color (3 floats, 0.0f-1.0f): ";
+  std::cin >> lr >> lg >> lb;
 
-  float lr = (float) ((hex >> 16) & 0xFF) / 0xFF;
-  float lg = (float) ((hex >>  8) & 0xFF) / 0xFF;
-  float lb = (float) ((hex >>  0) & 0xFF) / 0xFF;
-
-  std::cout << "Please enter the hex value of the right side (i.e. 0xFF00FF): ";
-  std::cin >> hex;
-
-  float rr = (float) ((hex >> 16) & 0xFF) / 0xFF;
-  float rg = (float) ((hex >>  8) & 0xFF) / 0xFF;
-  float rb = (float) ((hex >>  0) & 0xFF) / 0xFF;
-
-  std::cout << "Left  { " << lr << ", " << lg << ", " << lb << " }" << std::endl
-            << "Right { " << rr << ", " << rg << ", " << rb << " }" << std::endl;
+  std::cout << "Please enter right color (3 floats, 0.0f-1.0f): ";
+  std::cin >> rr >> rg >> rb;
 
   float f[8] = { x, y, lr, lg, lb, rr, rg, rb };
   _pointBuffer.push_back(Point<8>(f));
+}
+
+void App::pushCurve()
+{
+  if (!_pointBuffer.empty()) {
+    _canvas.addCurve(new Bezier<8>(_pointBuffer, _pointBuffer.size() - 1));
+    _pointBuffer.clear();
+  }
 }
 
 void App::initialize(sf::VideoMode mode, std::string title)
@@ -152,3 +208,5 @@ int App::run()
 sf::Window App::_window;
 Canvas App::_canvas(512);
 std::vector<Point<8> > App::_pointBuffer;
+bool App::_isEditMode = false;
+sf::Rect<int> App::_selectionRect;

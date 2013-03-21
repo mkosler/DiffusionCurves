@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <SFML/Window.hpp>
+#include <SFML/Graphics.hpp>
 
 #include "Canvas.h"
 
@@ -14,6 +15,8 @@ class App
     static sf::Window _window;
     static Canvas _canvas;
     static std::vector<Point<8> > _pointBuffer;
+    static bool _isEditMode;
+    static sf::Rect<int> _selectionRect;
 
     static void handleEvent(sf::Event &event);
 
@@ -21,6 +24,9 @@ class App
     static void handleKeyReleased(sf::Event::KeyEvent &event);
 
     static void handleMouseButtonPressed(sf::Event::MouseButtonEvent &event);
+    static void handleMouseButtonReleased(sf::Event::MouseButtonEvent &event);
+
+    static void handleMouseMove(sf::Event::MouseMoveEvent &event);
 
     static void update(float dt);
     static void draw();

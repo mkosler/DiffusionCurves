@@ -24,7 +24,7 @@ class Curve
     virtual const Point<n> interpolate(const float t, const size_t finish) = 0;
 
     Curve(std::vector<Point<n> > controlPoints, unsigned degree)
-      : _hasBeenUpdated(false),
+      : _hasBeenUpdated(true),
         _degree(degree),
         _step(0.01f),
         _controlPoints(controlPoints)
@@ -32,7 +32,7 @@ class Curve
     }
 
     Curve(std::vector<Point<n> > controlPoints, unsigned degree, float step)
-      : _hasBeenUpdated(false),
+      : _hasBeenUpdated(true),
         _degree(degree),
         _step(step),
         _controlPoints(controlPoints)
@@ -46,8 +46,27 @@ class Curve
 
     virtual void initialize() = 0;
 
-    virtual void update(float dt)
+    void updateLocation(size_t i, float x, float y)
     {
+      _hasBeenUpdated = true;
+      _controlPoints[i][0] = x;
+      _controlPoints[i][1] = y;
+    }
+
+    void updateLeftColor(size_t i, float r, float g, float b)
+    {
+      _hasBeenUpdated = true;
+      _controlPoints[i][2] = r;
+      _controlPoints[i][3] = g;
+      _controlPoints[i][4] = b;
+    }
+
+    void updateRightColor(size_t i, float r, float g, float b)
+    {
+      _hasBeenUpdated = true;
+      _controlPoints[i][5] = r;
+      _controlPoints[i][6] = g;
+      _controlPoints[i][7] = b;
     }
 
     void drawControlPoints()
@@ -60,6 +79,11 @@ class Curve
 
     void drawCurve()
     {
+      if (_hasBeenUpdated) {
+        _hasBeenUpdated = false;
+        initialize();
+      }
+
       glBegin(GL_QUADS);
         for (size_t i = 0; i < _interpolants.size() - 1; i++) {
           // Get the normal

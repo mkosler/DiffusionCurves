@@ -46,7 +46,12 @@ void App::handleKeyPressed(sf::Event::KeyEvent &event)
       _canvas.finalize();
       break;
     case sf::Key::L:
-      Canvas::load("assets/test.dat", _canvas);
+      {
+        std::string filename;
+        std::cout << "Load: Enter a filename: ";
+        std::cin >> filename;
+        Canvas::load(filename, _canvas);
+      }
       break;
     case sf::Key::Q:
       if (_isEditMode) {
@@ -54,8 +59,12 @@ void App::handleKeyPressed(sf::Event::KeyEvent &event)
       }
       break;
     case sf::Key::S:
-      std::cout << "Saving canvas..." << std::endl;
-      Canvas::save("assets/test.dat", _canvas);
+      {
+        std::string filename;
+        std::cout << "Save: Enter a filename: ";
+        std::cin >> filename;
+        Canvas::save(filename, _canvas);
+      }
       break;
     case sf::Key::V:
       _canvas.togglePointVisibility();

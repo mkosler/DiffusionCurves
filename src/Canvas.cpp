@@ -397,7 +397,7 @@ void Canvas::save(std::string filename, Canvas &canvas)
   for (size_t i = 0; i < canvas._curves.size(); i++) {
     Curve<8> *curve = canvas._curves[i];
     ofs << curve->_controlPoints.size() << std::endl;
-    for (size_t j = 0; i < curve->_controlPoints.size(); i++) {
+    for (size_t j = 0; j < curve->_controlPoints.size(); j++) {
       Point<8> point = curve->_controlPoints[j];
 
       ofs << point[0] << ' ' << point[1] << std::endl;

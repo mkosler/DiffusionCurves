@@ -4,6 +4,47 @@
 
 ## Due 3/21
 
+### Dependencies:
+
+- [SFML](http://www.sfml-dev.org/)
+- [OpenGL](http://www.opengl.org/)
+- [libSOIL](http://www.lonesock.net/soil.html)
+
+### Building
+
+*NOTE: Only tested on Ubuntu 12.10, and Crunchbang 11. All libraries are multiplatform, so
+there should be no issues, but I cannot guarantee it.*
+
+~~~
+make
+~~~
+
+### Running
+
+~~~
+./DiffusionCurves
+~~~
+
+### How to Use
+
+- **Left Mouse Click:**
+  - *In normal mode:* adds a point to the point buffer at the mouse location; prompts the user to enter the left and right color for the newly placed point
+  - *In edit mode:* moves a selected point to current mouse location
+- **Right Mouse Click:**
+  - *In normal mode:* creates a new Bezier curve from the current points in the point buffer, then clears the point buffer.
+  - *In edit mode:* click and drag to select a point to manipulate (*NOTE: must be dragging from top-left to bottom-right*)
+
+- **Escape:** closes the application
+- **C:** clears the canvas
+- **E:** toggles edit mode
+- **F:** finalized the canvas, sending to the be processed into diffusion curves
+- **Q:** *In edit mode:* prompts the user to pick new colors for the selected point
+- **V:** toggles control point visibility
+
+#### Setting colors
+
+When prompted *(by creating a new point or pressing Q when a point is currently selected)*, the color values follow the OpenGL standard for float-based RGB values. Each value must be between 0.0f and 1.0f.
+
 ### Purpose:
 
 This assignment will introduce you to a simple form of barycentric coordinates, a hierarchical solver, and demonstrate how other types of data can be used with smooth curves.

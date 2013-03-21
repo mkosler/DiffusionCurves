@@ -45,25 +45,9 @@ void App::handleKeyPressed(sf::Event::KeyEvent &event)
     case sf::Key::F:
       _canvas.finalize();
       break;
-    case sf::Key::L:
-      {
-        std::string filename;
-        std::cout << "Load: Enter a filename: ";
-        std::cin >> filename;
-        Canvas::load(filename, _canvas);
-      }
-      break;
     case sf::Key::Q:
       if (_isEditMode) {
         _canvas.colorSelectedPoint();
-      }
-      break;
-    case sf::Key::S:
-      {
-        std::string filename;
-        std::cout << "Save: Enter a filename: ";
-        std::cin >> filename;
-        Canvas::save(filename, _canvas);
       }
       break;
     case sf::Key::V:
@@ -86,11 +70,8 @@ void App::handleMouseButtonPressed(sf::Event::MouseButtonEvent &event)
 {
   switch (event.Button) {
     case sf::Mouse::Left:
-      if (!_canvas.isFinalized()) {
-        if (_isEditMode) {
-        } else {
+      if (!_canvas.isFinalized() && !_isEditMode) {
           addPoint(event.X, event.Y);
-        }
       }
       break;
     case sf::Mouse::Right:

@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <fstream>
 #include <sstream>
+#include <stack>
 
 #include "FreeImage.h"
 
@@ -26,60 +27,65 @@ bool Canvas::isBlack(float r, float g, float b)
   return (r + g + b) == 0;
 }
 
-void Canvas::downsample(float *pixels, float *npixels, unsigned size)
+std::vector<float> Canvas::downsample(std::vector<float> pixels)
 {
-  unsigned nsize = size / 2;
-  for (unsigned i = 0; i < nsize * nsize; i++) {
-    unsigned row = i / nsize;
+  unsigned sz = sqrt(pixels.size() / 3);
+  unsigned dsz = sz / 2;
 
-    unsigned x = (i * 2) + (row * size);
+  std::cout << "sz = " << sz << ", dsz = " << dsz << std::endl;
+  std::vector<float> downPixels(dsz * dsz * 3, 0);
+
+  for (size_t i = 0; i < (downPixels.size() / 3); i++) {
+    unsigned row = i / dsz;
+
+    unsigned x = (i * 2) + (row * sz);
     unsigned y = x + 1;
-    unsigned z = x + size;
+    unsigned z = x + sz;
     unsigned w = z + 1;
 
     unsigned count = 0;
     if (!isBlack(pixels[(3 * x)], pixels[(3 * x) + 1], pixels[(3 * x) + 2])) {
       count++;
 
-      npixels[(3 * i)]     += pixels[(3 * x)];
-      npixels[(3 * i) + 1] += pixels[(3 * x) + 1];
-      npixels[(3 * i) + 2] += pixels[(3 * x) + 2];
+      downPixels[(3 * i)]     += pixels[(3 * x)];
+      downPixels[(3 * i) + 1] += pixels[(3 * x) + 1];
+      downPixels[(3 * i) + 2] += pixels[(3 * x) + 2];
     }
 
     if (!isBlack(pixels[(3 * y)], pixels[(3 * y) + 1], pixels[(3 * y) + 2])) {
       count++;
 
-      npixels[(3 * i)]     += pixels[(3 * y)];
-      npixels[(3 * i) + 1] += pixels[(3 * y) + 1];
-      npixels[(3 * i) + 2] += pixels[(3 * y) + 2];
+      downPixels[(3 * i)]     += pixels[(3 * y)];
+      downPixels[(3 * i) + 1] += pixels[(3 * y) + 1];
+      downPixels[(3 * i) + 2] += pixels[(3 * y) + 2];
     }
 
     if (!isBlack(pixels[(3 * z)], pixels[(3 * z) + 1], pixels[(3 * z) + 2])) {
       count++;
 
-      npixels[(3 * i)]     += pixels[(3 * z)];
-      npixels[(3 * i) + 1] += pixels[(3 * z) + 1];
-      npixels[(3 * i) + 2] += pixels[(3 * z) + 2];
+      downPixels[(3 * i)]     += pixels[(3 * z)];
+      downPixels[(3 * i) + 1] += pixels[(3 * z) + 1];
+      downPixels[(3 * i) + 2] += pixels[(3 * z) + 2];
     }
 
     if (!isBlack(pixels[(3 * w)], pixels[(3 * w) + 1], pixels[(3 * w) + 2])) {
       count++;
 
-      npixels[(3 * i)]     += pixels[(3 * w)];
-      npixels[(3 * i) + 1] += pixels[(3 * w) + 1];
-      npixels[(3 * i) + 2] += pixels[(3 * w) + 2];
+      downPixels[(3 * i)]     += pixels[(3 * w)];
+      downPixels[(3 * i) + 1] += pixels[(3 * w) + 1];
+      downPixels[(3 * i) + 2] += pixels[(3 * w) + 2];
     }
 
     if (count > 0) {
-      npixels[(3 * i)]     /= count;
-      npixels[(3 * i) + 1] /= count;
-      npixels[(3 * i) + 2] /= count;
+      downPixels[(3 * i)]     /= count;
+      downPixels[(3 * i) + 1] /= count;
+      downPixels[(3 * i) + 2] /= count;
     }
   }
-}
 
-void Canvas::upsample(float *pixels, float *npixels, unsigned size)
-{
+  std::cout << "Finishing downsample" << std::endl;
+
+  return downPixels;
 }
 
 void Canvas::addCurve(Curve<8> *curve)
@@ -125,35 +131,53 @@ void Canvas::draw()
   glFlush();
 
   if (_isFinalized) {
-    std::vector<float*> buffers;
+    std::stack<std::vector<float> > buffers;
 
-    for (unsigned size = _width; size > 1; size /= 2) {
+    for (unsigned size = 512; size > 1; size /= 2) {
       // Take a screenshot
       std::ostringstream oss;
-      oss << "test_" << size << ".bmp";
+      oss << "test_down_" << size << ".bmp";
       screenshot(oss.str(), size, size);
 
       // Read the pixels from the current buffer
-      float *pixels = new float[size * size * 3];
-      glReadPixels(0, 0, size, size, GL_RGB, GL_FLOAT, pixels);
+      //float *pixels = new float[size * size * 3];
+      std::vector<float> pixels(size * size * 3, 0.0f);
+      glReadPixels(0, 0, size, size, GL_RGB, GL_FLOAT, &pixels[0]);
 
       // Add it to the buffer collection
-      buffers.push_back(pixels);
-
-      // Create a new, smaller buffer, and fill with 0
-      float *npixels = new float[(size / 2) * (size / 2) * 3];
-      std::fill(npixels, npixels + ((size / 2) * (size / 2) * 3), 0);
+      std::cout << "Adding buffer of size " << size << " to the stack!" << std::endl;
+      buffers.push(pixels);
 
       // Downsample the image
-      downsample(pixels, npixels, size);
+      std::vector<float> npixels = downsample(pixels);
 
       // Draw the new buffer onto the screen
-      glDrawPixels(size / 2, size / 2, GL_RGB, GL_FLOAT, npixels);
+      glDrawPixels(size / 2, size / 2, GL_RGB, GL_FLOAT, &npixels[0]);
       glFlush();
-
-      // Delete the new buffer
-      delete[] npixels;
     }
+
+    //unsigned size = 2;
+    //while (!buffers.empty()) {
+      //std::vector<float> oldBuffer = buffers.top(); buffers.pop();
+      //std::vector<float> upBuffer = buffers.top();
+
+      //if (buffers.empty()) {
+        //break;
+      //}
+
+      //std::cout << "Upsampling from buffer of size " << size << " to one of size " << size * 2 << std::endl;
+      //upsample(oldBuffer, upBuffer, size);
+
+      //size *= 2;
+      //glDrawPixels(size, size, GL_RGB, GL_FLOAT, upBuffer);
+      //glFlush();
+
+      //std::ostringstream oss;
+      //oss << "test_up_" << size << ".bmp";
+      //screenshot(oss.str(), size, size);
+
+      //delete[] oldBuffer;
+    //}
   }
 }
 
@@ -161,13 +185,15 @@ void Canvas::screenshot(std::string filename, unsigned width, unsigned height)
 {
   filename = "assets/" + filename;
 
+  std::cout << "Canvas::screenshot(" << filename << ")" << std::endl;
+
   unsigned char *pixels = new unsigned char[width * height * 3];
   glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 
   FIBITMAP *image = FreeImage_ConvertFromRawBits(pixels, width, height, 3 * width, 24, 0xFF0000, 0x00FF00, 0x0000FF, false);
   FreeImage_Save(FIF_BMP, image, filename.c_str(), 0);
 
-  delete image;
+  FreeImage_Unload(image);
   delete[] pixels;
 }
 

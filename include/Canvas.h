@@ -16,8 +16,7 @@ class Canvas
 
     bool isBlack(float r, float g, float b);
 
-    void downsample(float *pixels, float *npixels, unsigned size);
-    void upsample(float *pixels, float *npixels, unsigned size);
+    std::vector<float> downsample(std::vector<float> pixels);
 
   public:
     Canvas(unsigned width, unsigned height);

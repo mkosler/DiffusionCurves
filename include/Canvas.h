@@ -12,12 +12,17 @@ class Canvas
     unsigned _size;
 
     std::vector<Curve<8>*> _curves;
-    bool _arePointsVisible, _isFinalized;
+    bool _arePointsVisible, _isFinalized, _hasDiffusionCurve;
+
+    std::vector<float> _diffusionCurve;
 
     bool isBlack(float r, float g, float b);
 
+    std::vector<bool> getConstraintMask(std::vector<float> pixels);
+
     std::vector<float> downsample(std::vector<float> pixels);
     void upsample(std::vector<float> pixels, std::vector<float> &upPixels);
+    void smooth(std::vector<float> &pixels, std::vector<bool> mask);
 
   public:
     Canvas(unsigned size);

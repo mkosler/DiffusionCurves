@@ -4,15 +4,18 @@
 #include <sstream>
 #include <stack>
 
-#include "FreeImage.h"
+#include <SOIL.h>
 
 #include "Bezier.h"
 #include "Canvas.h"
 
+#define SMOOTH_ITERATIONS 1000
+
 Canvas::Canvas(unsigned size)
   : _size(size),
     _arePointsVisible(true),
-    _isFinalized(false)
+    _isFinalized(false),
+    _hasDiffusionCurve(false)
 {
 }
 
@@ -24,6 +27,15 @@ Canvas::~Canvas()
 bool Canvas::isBlack(float r, float g, float b)
 {
   return (r + g + b) == 0;
+}
+
+std::vector<bool> Canvas::getConstraintMask(std::vector<float> pixels)
+{
+  std::vector<bool> constraintMask(pixels.size() / 3, false);
+  for (size_t i = 0; i < constraintMask.size(); i++) {
+    constraintMask[i] = !isBlack(pixels[(3 * i)], pixels[(3 * i) + 1], pixels[(3 * i) + 2]);
+  }
+  return constraintMask;
 }
 
 std::vector<float> Canvas::downsample(std::vector<float> pixels)
@@ -88,8 +100,6 @@ void Canvas::upsample(std::vector<float> pixels, std::vector<float> &upPixels)
   unsigned sz = sqrt(pixels.size() / 3);
   unsigned usz = sz * 2;
 
-  std::cout << "Beginning upsample for loop" << std::endl
-            << "pixels.size() / 3 = " << pixels.size() / 3 << std::endl;
   for (size_t i = 0; i < (pixels.size() / 3); i++) {
     unsigned row = i / sz;
 
@@ -122,8 +132,59 @@ void Canvas::upsample(std::vector<float> pixels, std::vector<float> &upPixels)
       upPixels[(3 * w) + 2] = pixels[(3 * i) + 2];
     }
   }
+}
 
-  std::cout << "Finalizing upsample" << std::endl;
+void Canvas::smooth(std::vector<float> &pixels, std::vector<bool> mask)
+{
+  size_t sz = sqrt(mask.size());
+
+  for (unsigned j = 0; j < SMOOTH_ITERATIONS; j++) {
+    for (size_t i = 0; i < mask.size(); i++) {
+      if (!mask[i]) {
+        size_t r = i / sz, c = i % sz;
+
+        float R = 0.0f, G = 0.0f, B = 0.0f;
+        unsigned count = 0;
+        if (c > 0) {
+          count++;
+
+          R += pixels[(3 * (i - 1))];
+          G += pixels[(3 * (i - 1)) + 1];
+          B += pixels[(3 * (i - 1)) + 2];
+        }
+
+        if (c < sz - 1) {
+          count++;
+
+          R += pixels[(3 * (i + 1))];
+          G += pixels[(3 * (i + 1)) + 1];
+          B += pixels[(3 * (i + 1)) + 2];
+        }
+
+        if (r > 0) {
+          count++;
+
+          R += pixels[(3 * (i - sz))];
+          G += pixels[(3 * (i - sz)) + 1];
+          B += pixels[(3 * (i - sz)) + 2];
+        }
+
+        if (r < sz - 1) {
+          count++;
+
+          R += pixels[(3 * (i + sz))];
+          G += pixels[(3 * (i + sz)) + 1];
+          B += pixels[(3 * (i + sz)) + 2];
+        }
+
+        R /= count; G /= count; B /= count;
+
+        pixels[(3 * i)]     = R;
+        pixels[(3 * i) + 1] = G;
+        pixels[(3 * i) + 2] = B;
+      }
+    }
+  }
 }
 
 void Canvas::addCurve(Curve<8> *curve)
@@ -160,6 +221,11 @@ void Canvas::update(float dt)
 
 void Canvas::draw()
 {
+  if (_hasDiffusionCurve) {
+    glDrawPixels(_size, _size, GL_RGB, GL_FLOAT, &_diffusionCurve[0]);
+    return;
+  }
+
   for (size_t i = 0; i < _curves.size(); i++) {
     if (_arePointsVisible) {
       _curves[i]->drawControlPoints();
@@ -174,74 +240,73 @@ void Canvas::draw()
     std::stack<std::vector<float> > buffers;
 
     for (unsigned size = 512; size > 1; size /= 2) {
-      // Take a screenshot
-      std::ostringstream oss;
-      oss << "test_down_" << size << ".bmp";
-      screenshot(oss.str(), size);
-
       // Read the pixels from the current buffer
       std::vector<float> pixels(size * size * 3, 0.0f);
       glReadPixels(0, 0, size, size, GL_RGB, GL_FLOAT, &pixels[0]);
+      if (size == _size) {
+        std::ostringstream oss;
+        oss << "test_down_" << size << ".tga";
+        screenshot(oss.str(), size);
+      }
 
       // Add it to the buffer collection
-      std::cout << "Adding buffer of size " << size << " to the stack!" << std::endl;
       buffers.push(pixels);
 
       // Downsample the image
       std::vector<float> npixels = downsample(pixels);
-
-      std::cout << "Drawing downsample" << std::endl;
 
       // Draw the new buffer onto the screen
       glDrawPixels(size / 2, size / 2, GL_RGB, GL_FLOAT, &npixels[0]);
       glFlush();
     }
 
-    std::cout << "Beginning to pop buffers" << std::endl;
     while (true) {
       // Pop the top buffer
-      std::vector<float> oldBuffer = buffers.top();
-      buffers.pop();
+      std::vector<float> oldBuffer = buffers.top(); buffers.pop();
 
       // Check if buffers is empty
-      std::cout << "buffers.empty() = " << (buffers.empty() ? "true" : "false") << std::endl;
       if (buffers.empty()) {
         break;
       }
 
-      // Get the next biggest buffer, but don't pop
-      std::vector<float> upBuffer = buffers.top();
+      // Get the next buffer on the stack to upsample and smooth
+      std::vector<float> upBuffer = buffers.top(); buffers.pop();
+      std::vector<bool> mask = getConstraintMask(upBuffer);
 
       // Upsample that buffer
       upsample(oldBuffer, upBuffer);
+      smooth(upBuffer, mask);
 
       unsigned sz = sqrt(upBuffer.size() / 3);
-
-      std::cout << "Drawing onto the screen" << std::endl;
 
       // Draw it onto the screen
       glDrawPixels(sz, sz, GL_RGB, GL_FLOAT, &upBuffer[0]);
       glFlush();
 
-      // Take a screenshot
-      std::ostringstream oss;
-      oss << "test_up_" << sz << ".bmp";
-      screenshot(oss.str(), sz);
+      // Add the smoothed buffer back to the stack
+      buffers.push(upBuffer);
     }
+
+    _diffusionCurve = std::vector<float>(_size * _size * 3, 0.0f);
+    glReadPixels(0, 0, _size, _size, GL_RGB, GL_FLOAT, &_diffusionCurve[0]);
+
+    std::ostringstream oss;
+    oss << "test_up_" << _size << ".tga";
+    screenshot(oss.str(), _size);
+
+    _hasDiffusionCurve = true;
   }
 }
 
 void Canvas::screenshot(std::string filename, unsigned size)
 {
-  //filename = "assets/" + filename;
+  filename = "assets/" + filename;
 
-  //std::vector<unsigned char> pixels(size * size * 3, 0);
-  //glReadPixels(0, 0, size, size, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0]);
-
-  //FIBITMAP *image = FreeImage_ConvertFromRawBits(&pixels[0], size, size, 3 * size, 24, 0xFF0000, 0x00FF00, 0x0000FF, false);
-  //FreeImage_Save(FIF_BMP, image, filename.c_str(), 0);
-
-  //FreeImage_Unload(image);
+  if (!SOIL_save_screenshot(filename.c_str(), SOIL_SAVE_TYPE_TGA, 0, 0, size, size)) {
+    std::cerr << "Error saving " << filename << std::endl;
+  } else {
+    std::cout << "Successfully saved " << filename << std::endl;
+  }
 }
 
 std::ostream &operator<<(std::ostream &os, const Canvas &c)

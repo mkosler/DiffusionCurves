@@ -6,11 +6,14 @@
 void App::handleEvent(sf::Event &event)
 {
   switch (event.Type) {
+    case sf::Event::Closed:
+      _window.Close();
+      break;
     case sf::Event::KeyPressed:
       handleKeyPressed(event.Key);
       break;
-    case sf::Event::Closed:
-      _window.Close();
+    case sf::Event::MouseButtonPressed:
+      handleMouseButtonPressed(event.MouseButton);
       break;
     case sf::Event::Resized:
       glViewport(0, event.Size.Width, event.Size.Height, 0);
@@ -58,6 +61,19 @@ void App::handleKeyReleased(sf::Event::KeyEvent &event)
   }
 }
 
+void App::handleMouseButtonPressed(sf::Event::MouseButtonEvent &event)
+{
+  switch (event.Button) {
+    case sf::Mouse::Left:
+      addPoint(event.X, event.Y);
+      break;
+    case sf::Mouse::Right:
+      break;
+    default:
+      break;
+  }
+}
+
 void App::update(float dt)
 {
   _canvas.update(dt);
@@ -72,27 +88,24 @@ void App::draw()
 
 void App::addPoint(float x, float y)
 {
-  addPoint(
-    x,
-    y,
-    _leftColor[0],
-    _leftColor[1],
-    _leftColor[2],
-    _rightColor[0],
-    _rightColor[1],
-    _rightColor[2]);
-}
+  unsigned hex;
+  std::cout << "Please enter the hex value of the left side (i.e. 0xFF00FF): ";
+  std::cin >> hex;
 
-void App::addPoint(
-  float x,
-  float y,
-  float lr,
-  float lg,
-  float lb,
-  float rr,
-  float rg,
-  float rb)
-{
+  float lr = (float) ((hex >> 16) & 0xFF) / 0xFF;
+  float lg = (float) ((hex >>  8) & 0xFF) / 0xFF;
+  float lb = (float) ((hex >>  0) & 0xFF) / 0xFF;
+
+  std::cout << "Please enter the hex value of the right side (i.e. 0xFF00FF): ";
+  std::cin >> hex;
+
+  float rr = (float) ((hex >> 16) & 0xFF) / 0xFF;
+  float rg = (float) ((hex >>  8) & 0xFF) / 0xFF;
+  float rb = (float) ((hex >>  0) & 0xFF) / 0xFF;
+
+  std::cout << "Left  { " << lr << ", " << lg << ", " << lb << " }" << std::endl
+            << "Right { " << rr << ", " << rg << ", " << rb << " }" << std::endl;
+
   float f[8] = { x, y, lr, lg, lb, rr, rg, rb };
   _pointBuffer.push_back(Point<8>(f));
 }
@@ -106,7 +119,7 @@ void App::initialize(sf::VideoMode mode, std::string title)
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
   glDisable(GL_DEPTH_TEST);
-  glShadeModel(GL_FLAT);
+  glShadeModel(GL_SMOOTH);
   glDisable(GL_CULL_FACE);
 
   glMatrixMode(GL_PROJECTION);
@@ -139,5 +152,3 @@ int App::run()
 sf::Window App::_window;
 Canvas App::_canvas(512);
 std::vector<Point<8> > App::_pointBuffer;
-float App::_leftColor[3] = { 0.0f, 0.0f, 0.0f };
-float App::_rightColor[3] = { 0.0f, 0.0f, 0.0f };

@@ -35,9 +35,6 @@ void App::handleKeyPressed(sf::Event::KeyEvent &event)
     case sf::Key::Escape:
       _window.Close();
       break;
-    case sf::Key::Space:
-      std::cout << _canvas << std::endl;
-      break;
     case sf::Key::C:
       _canvas.clear();
       break;
@@ -50,6 +47,11 @@ void App::handleKeyPressed(sf::Event::KeyEvent &event)
       break;
     case sf::Key::L:
       Canvas::load("assets/test.dat", _canvas);
+      break;
+    case sf::Key::Q:
+      if (_isEditMode) {
+        _canvas.colorSelectedPoint();
+      }
       break;
     case sf::Key::S:
       std::cout << "Saving canvas..." << std::endl;

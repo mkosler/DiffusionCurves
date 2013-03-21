@@ -42,6 +42,8 @@ class Canvas
     void draw();
 
     void selectPoint(sf::Rect<int> rect);
+
+    void colorSelectedPoint();
     void moveSelectedPoint(float x, float y);
 
     void screenshot(std::string filename, unsigned size);

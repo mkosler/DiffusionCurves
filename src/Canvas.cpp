@@ -317,6 +317,22 @@ void Canvas::selectPoint(sf::Rect<int> rect)
   _curveIndex = _selectionIndex = -1;
 }
 
+void Canvas::colorSelectedPoint()
+{
+  if (_curveIndex < 0 || _selectionIndex < 0) return;
+
+  float lr, lg, lb, rr, rg, rb;
+  std::cout << "Please enter left color (3 floats, 0.0f-1.0f): ";
+  std::cin >> lr >> lg >> lb;
+
+  _curves[_curveIndex]->updateLeftColor(_selectionIndex, lr, lg, lb);
+
+  std::cout << "Please enter right color (3 floats, 0.0f-1.0f): ";
+  std::cin >> rr >> rg >> rb;
+
+  _curves[_curveIndex]->updateRightColor(_selectionIndex, rr, rg, rb);
+}
+
 void Canvas::moveSelectedPoint(float x, float y)
 {
   if (_curveIndex < 0 || _selectionIndex < 0) return;

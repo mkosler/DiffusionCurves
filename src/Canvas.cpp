@@ -7,7 +7,7 @@
 #include "Bezier.h"
 #include "Canvas.h"
 
-#define SMOOTH_ITERATIONS 100
+#define SMOOTH_ITERATIONS 1
 
 Canvas::Canvas(unsigned size)
   : _size(size),
@@ -246,11 +246,16 @@ void Canvas::draw()
     std::vector<float> pixels(_size * _size * 3, 0.0f);
     glReadPixels(0, 0, _size, _size, GL_RGB, GL_FLOAT, &pixels[0]);
 
+    sf::Clock c1;
     while (pixels.size() >= 12) {
+      sf::Clock c2;
       buffers.push(pixels);
       pixels = downsample(pixels);
+      std::cout << "Downsample [Size (" << pixels.size() << ")]: " << c2.GetElapsedTime() << std::endl;
     }
+    std::cout << "Total: " << c1.GetElapsedTime() << std::endl;
 
+    c1.Reset();
     while (true) {
       // Pop the top buffer
       std::vector<float> oldBuffer = buffers.top(); buffers.pop();
@@ -267,11 +272,16 @@ void Canvas::draw()
       std::vector<bool> mask = getConstraintMask(upBuffer);
 
       // Upsample that buffer
+      sf::Clock c2;
       upsample(oldBuffer, upBuffer);
+      std::cout << "Upsample [Size (" << upBuffer.size() << ")]: " << c2.GetElapsedTime() << std::endl;
+      c2.Reset();
       smooth(upBuffer, mask);
+      std::cout << "Smooth [Size (" << upBuffer.size() << ")]: " << c2.GetElapsedTime() << std::endl;
 
       buffers.push(upBuffer);
     }
+    std::cout << "Total: " << c1.GetElapsedTime() << std::endl;
   }
 }
 

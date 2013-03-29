@@ -122,18 +122,6 @@ void App::draw()
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  for (size_t i = 0; i < _pointBuffer.size(); i++) {
-    _pointBuffer[i].draw();
-  }
-
-  glColor3f(0.0f, 1.0f, 0.0f);
-  glBegin(GL_LINE_LOOP);
-    glVertex2i(_selectionRect.Left, _selectionRect.Top);
-    glVertex2i(_selectionRect.Left, _selectionRect.Bottom);
-    glVertex2i(_selectionRect.Right, _selectionRect.Bottom);
-    glVertex2i(_selectionRect.Right, _selectionRect.Top);
-  glEnd();
-
   _canvas.draw();
 }
 
@@ -203,7 +191,7 @@ void App::load(std::string filename)
 }
 
 sf::Window App::_window;
-Canvas App::_canvas(512);
+Canvas App::_canvas(256);
 std::vector<Point<8> > App::_pointBuffer;
 bool App::_isEditMode = false;
 sf::Rect<int> App::_selectionRect;

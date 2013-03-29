@@ -3,3 +3,5 @@
 DiffusionCurves
 *.o
 *.bmp
+*.tga
+*.png

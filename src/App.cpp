@@ -197,6 +197,11 @@ int App::run()
   return 1;
 }
 
+void App::load(std::string filename)
+{
+  Canvas::load(filename, _canvas);
+}
+
 sf::Window App::_window;
 Canvas App::_canvas(512);
 std::vector<Point<8> > App::_pointBuffer;

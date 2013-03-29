@@ -37,6 +37,7 @@ class App
   public:
     static void initialize(sf::VideoMode mode, std::string title);
     static int run();
+    static void load(std::string filename);
 };
 
 #endif

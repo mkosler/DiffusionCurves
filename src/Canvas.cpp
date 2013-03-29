@@ -4,8 +4,6 @@
 #include <sstream>
 #include <stack>
 
-#include <SOIL.h>
-
 #include "Bezier.h"
 #include "Canvas.h"
 
@@ -223,6 +221,9 @@ bool Canvas::isFinalized() const
 
 void Canvas::update(float dt)
 {
+  if (_isFinalized) {
+    std::cout << "dt = " << dt << std::endl;
+  }
 }
 
 void Canvas::draw()
@@ -247,11 +248,6 @@ void Canvas::draw()
       // Read the pixels from the current buffer
       std::vector<float> pixels(size * size * 3, 0.0f);
       glReadPixels(0, 0, size, size, GL_RGB, GL_FLOAT, &pixels[0]);
-      if (size == _size) {
-        std::ostringstream oss;
-        oss << "test_down_" << size << ".tga";
-        screenshot(oss.str(), size);
-      }
 
       // Add it to the buffer collection
       buffers.push(pixels);
@@ -294,10 +290,6 @@ void Canvas::draw()
     _diffusionCurve = std::vector<float>(_size * _size * 3, 0.0f);
     glReadPixels(0, 0, _size, _size, GL_RGB, GL_FLOAT, &_diffusionCurve[0]);
 
-    std::ostringstream oss;
-    oss << "test_up_" << _size << ".tga";
-    screenshot(oss.str(), _size);
-
     _hasDiffusionCurve = true;
   }
 }
@@ -338,17 +330,6 @@ void Canvas::moveSelectedPoint(float x, float y)
   if (_curveIndex < 0 || _selectionIndex < 0) return;
 
   _curves[_curveIndex]->updateLocation(_selectionIndex, x, y);
-}
-
-void Canvas::screenshot(std::string filename, unsigned size)
-{
-  filename = "assets/" + filename;
-
-  if (!SOIL_save_screenshot(filename.c_str(), SOIL_SAVE_TYPE_TGA, 0, 0, size, size)) {
-    std::cerr << "Error saving " << filename << std::endl;
-  } else {
-    std::cout << "Successfully saved " << filename << std::endl;
-  }
 }
 
 std::ostream &operator<<(std::ostream &os, const Canvas &c)

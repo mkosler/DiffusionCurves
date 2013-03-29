@@ -1,8 +1,7 @@
 CC=g++
 INCDIR=include/
-LIBDIR=libs/
-CFLAGS=-c -Wall -L$(LIBDIR) -I$(INCDIR)
-LDFLAGS=-lGL -lsfml-system -lsfml-window -lsfml-graphics -lSOIL
+CFLAGS=-c -Wall -I$(INCDIR)
+LDFLAGS=-lGL -lsfml-system -lsfml-window -lsfml-graphics
 SOURCES=$(wildcard src/*.cpp)
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=DiffusionCurves

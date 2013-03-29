@@ -46,8 +46,6 @@ class Canvas
     void colorSelectedPoint();
     void moveSelectedPoint(float x, float y);
 
-    void screenshot(std::string filename, unsigned size);
-
     friend std::ostream &operator<<(std::ostream &os, const Canvas &c);
 
     static void load(std::string filename, Canvas &canvas);

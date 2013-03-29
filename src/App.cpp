@@ -191,7 +191,7 @@ void App::load(std::string filename)
 }
 
 sf::Window App::_window;
-Canvas App::_canvas(256);
+Canvas App::_canvas(512);
 std::vector<Point<8> > App::_pointBuffer;
 bool App::_isEditMode = false;
 sf::Rect<int> App::_selectionRect;

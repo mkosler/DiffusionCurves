@@ -221,9 +221,6 @@ bool Canvas::isFinalized() const
 
 void Canvas::update(float dt)
 {
-  if (_isFinalized) {
-    std::cout << "dt = " << dt << std::endl;
-  }
 }
 
 void Canvas::draw()
@@ -246,14 +243,13 @@ void Canvas::draw()
     std::vector<float> pixels(_size * _size * 3, 0.0f);
     glReadPixels(0, 0, _size, _size, GL_RGB, GL_FLOAT, &pixels[0]);
 
+    float time[2] = { 0 };
     sf::Clock c1;
     while (pixels.size() >= 12) {
-      sf::Clock c2;
       buffers.push(pixels);
       pixels = downsample(pixels);
-      std::cout << "Downsample [Size (" << pixels.size() << ")]: " << c2.GetElapsedTime() << std::endl;
     }
-    std::cout << "Total: " << c1.GetElapsedTime() << std::endl;
+    time[0] = c1.GetElapsedTime();
 
     c1.Reset();
     while (true) {
@@ -272,16 +268,13 @@ void Canvas::draw()
       std::vector<bool> mask = getConstraintMask(upBuffer);
 
       // Upsample that buffer
-      sf::Clock c2;
       upsample(oldBuffer, upBuffer);
-      std::cout << "Upsample [Size (" << upBuffer.size() << ")]: " << c2.GetElapsedTime() << std::endl;
-      c2.Reset();
       smooth(upBuffer, mask);
-      std::cout << "Smooth [Size (" << upBuffer.size() << ")]: " << c2.GetElapsedTime() << std::endl;
 
       buffers.push(upBuffer);
     }
-    std::cout << "Total: " << c1.GetElapsedTime() << std::endl;
+    time[1] = c1.GetElapsedTime();
+    std::cout << "Total: " << time[1] + time[0] << std::endl;
   }
 }
 

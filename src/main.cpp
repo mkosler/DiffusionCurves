@@ -2,7 +2,7 @@
 
 #include "App.h"
 
-#define WINDOW_SIZE 256
+#define WINDOW_SIZE 512
 
 int main(int argc, char *argv[])
 {

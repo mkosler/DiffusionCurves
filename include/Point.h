@@ -6,6 +6,8 @@
 #include <iomanip>
 #include <iostream>
 
+#include <SFML/Window.hpp>
+
 #include <GL/gl.h>
 
 #define POINT_SIZE 10
@@ -124,6 +126,16 @@ class Point
     float &operator[](int i)
     {
       return _data[i];
+    }
+
+    void update(float dt)
+    {
+      _data[0] = static_cast<float>(sf::Randomizer::Random(0, 512));
+      _data[1] = static_cast<float>(sf::Randomizer::Random(0, 512));
+
+      for (unsigned i = 2; i < 8; i++) {
+        _data[i] = sf::Randomizer::Random(0.0f, 1.0f);
+      }
     }
 
     void draw()

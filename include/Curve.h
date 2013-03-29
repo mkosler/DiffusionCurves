@@ -77,12 +77,16 @@ class Curve
       }
     }
 
+    void update(float dt)
+    {
+      for (size_t i = 0; i < _controlPoints.size(); i++) {
+        _controlPoints[i].update(dt);
+      }
+    }
+
     void drawCurve()
     {
-      if (_hasBeenUpdated) {
-        _hasBeenUpdated = false;
-        initialize();
-      }
+      initialize();
 
       glBegin(GL_QUADS);
         for (size_t i = 0; i < _interpolants.size() - 1; i++) {

@@ -11,7 +11,7 @@
 
 Canvas::Canvas(unsigned size)
   : _size(size),
-    _arePointsVisible(true),
+    _arePointsVisible(false),
     _isFinalized(false),
     _hasDiffusionCurve(false),
     _curveIndex(-1),
@@ -201,7 +201,7 @@ void Canvas::clear()
 {
   _isFinalized = _hasDiffusionCurve = false;
   _diffusionCurve.clear();
-  _arePointsVisible = true;
+  _arePointsVisible = false;
   while (!_curves.empty()) {
     delete _curves.back();
     _curves.pop_back();
@@ -221,6 +221,9 @@ bool Canvas::isFinalized() const
 
 void Canvas::update(float dt)
 {
+  for (size_t i = 0; i < _curves.size(); i++) {
+    _curves[i]->update(dt);
+  }
 }
 
 void Canvas::draw()

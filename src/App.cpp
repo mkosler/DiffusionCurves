@@ -170,13 +170,17 @@ void App::initialize(sf::VideoMode mode, std::string title)
 int App::run()
 {
   sf::Event event;
+  sf::Clock clock;
 
   while (_window.IsOpened()) {
     while (_window.GetEvent(event)) {
       handleEvent(event);
     }
 
-    update(_window.GetFrameTime());
+    if (clock.GetElapsedTime() > 0.16f) {
+      clock.Reset();
+      update(_window.GetFrameTime());
+    }
     draw();
 
     _window.Display();

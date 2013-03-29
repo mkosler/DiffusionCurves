@@ -243,21 +243,12 @@ void Canvas::draw()
 
   if (_isFinalized) {
     std::stack<std::vector<float> > buffers;
+    std::vector<float> pixels(_size * _size * 3, 0.0f);
+    glReadPixels(0, 0, _size, _size, GL_RGB, GL_FLOAT, &pixels[0]);
 
-    for (unsigned size = 512; size > 1; size /= 2) {
-      // Read the pixels from the current buffer
-      std::vector<float> pixels(size * size * 3, 0.0f);
-      glReadPixels(0, 0, size, size, GL_RGB, GL_FLOAT, &pixels[0]);
-
-      // Add it to the buffer collection
+    while (pixels.size() >= 12) {
       buffers.push(pixels);
-
-      // Downsample the image
-      std::vector<float> npixels = downsample(pixels);
-
-      // Draw the new buffer onto the screen
-      glDrawPixels(size / 2, size / 2, GL_RGB, GL_FLOAT, &npixels[0]);
-      glFlush();
+      pixels = downsample(pixels);
     }
 
     while (true) {
@@ -266,6 +257,8 @@ void Canvas::draw()
 
       // Check if buffers is empty
       if (buffers.empty()) {
+        _diffusionCurve = oldBuffer;
+        _hasDiffusionCurve = true;
         break;
       }
 
@@ -277,20 +270,8 @@ void Canvas::draw()
       upsample(oldBuffer, upBuffer);
       smooth(upBuffer, mask);
 
-      unsigned sz = sqrt(upBuffer.size() / 3);
-
-      // Draw it onto the screen
-      glDrawPixels(sz, sz, GL_RGB, GL_FLOAT, &upBuffer[0]);
-      glFlush();
-
-      // Add the smoothed buffer back to the stack
       buffers.push(upBuffer);
     }
-
-    _diffusionCurve = std::vector<float>(_size * _size * 3, 0.0f);
-    glReadPixels(0, 0, _size, _size, GL_RGB, GL_FLOAT, &_diffusionCurve[0]);
-
-    _hasDiffusionCurve = true;
   }
 }
 
